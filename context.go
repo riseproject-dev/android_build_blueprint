@@ -3448,6 +3448,13 @@ func (c *Context) PrepareBuildActions(config interface{}) (deps []string, errs [
 		c.globalRules = c.liveGlobals.rules
 
 		c.buildActionsReady = true
+
+		// Reclaim the logicModules/properties freed by
+		// FreeModuleAfterGenerateBuildActions now, before the write phase
+		// allocates, so that memory is not counted against the analysis peak.
+		pprof.Do(c.Context, pprof.Labels("blueprint", "GC"), func(ctx context.Context) {
+			runtime.GC()
+		})
 	})
 
 	if len(errs) > 0 {
